@@ -9,7 +9,7 @@
 :root{
   --bg:#fff;--bg2:#f5f5f5;--bg3:#ebebeb;
   --text:#111;--text2:#555;--text3:#999;
-  --b:rgba(0,0,0,0.11);--b2:rgba(0,0,0,0.2);
+  --b:rgba(0,0,0,0.11);--b2:rgba(0,0,0,0.20);
   --r:8px;--rl:12px;
 }
 @media(prefers-color-scheme:dark){:root{
@@ -20,8 +20,6 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:18px;min-height:100vh;}
 h1{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:13px;}
 h1 span{color:var(--text3);font-weight:400;font-size:13px;}
-
-/* toolbar */
 .tb{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap;align-items:center;}
 select,input[type=date],input[type=text],input[type=number],textarea{
   font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);
@@ -48,77 +46,74 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
 .fat{font-size:13px;font-weight:500;margin-bottom:11px;}
 .fag{display:grid;gap:8px;align-items:end;}
 .fag.c{grid-template-columns:1fr auto;}
-.fag.p{grid-template-columns:1fr 1fr auto;}
+.fag.p{grid-template-columns:1fr auto;}
 .fag.t{grid-template-columns:2fr 1fr 1fr 1fr auto;}
 @media(max-width:680px){.fag.c,.fag.p,.fag.t{grid-template-columns:1fr;}}
 .fl{font-size:11px;color:var(--text2);display:block;margin-bottom:3px;}
-.fag input,.fag select{width:100%;}
+.fag input{width:100%;}
 .fbt{display:flex;gap:6px;padding-top:15px;}
 #ep{margin-top:6px;font-size:11px;color:var(--text2);min-height:14px;}
+
+/* color picker */
+.cp-wrap{display:flex;flex-direction:column;gap:5px;}
+.cp-swatches{display:flex;gap:5px;flex-wrap:wrap;}
+.cp-sw{width:22px;height:22px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:transform .1s,border-color .1s;flex-shrink:0;}
+.cp-sw:hover{transform:scale(1.15);}
+.cp-sw.sel{border-color:var(--text);transform:scale(1.1);}
 
 /* legend */
 .leg{display:flex;gap:13px;margin-bottom:9px;font-size:11px;color:var(--text2);flex-wrap:wrap;align-items:center;}
 .leg span{display:flex;align-items:center;gap:4px;}
 .dot{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0;}
 
-/* gantt main */
+/* gantt */
 .gm{display:flex;border:0.5px solid var(--b2);border-radius:var(--rl);overflow:hidden;transition:height .2s;}
 .gl{width:294px;min-width:294px;overflow-y:auto;overflow-x:hidden;border-right:0.5px solid var(--b2);}
 .gl::-webkit-scrollbar{display:none;}
 .gr{flex:1;overflow:auto;}
 .gr::-webkit-scrollbar{height:4px;width:4px;}
 .gr::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-
-/* left header */
 #lhdr{display:flex;align-items:center;padding:0 8px 0 10px;font-size:11px;font-weight:500;color:var(--text2);background:var(--bg2);position:sticky;top:0;z-index:6;border-bottom:0.5px solid var(--b2);justify-content:space-between;flex-shrink:0;}
 
-/* CLIENT row */
-.row-c{
-  height:32px;display:flex;align-items:center;padding:0 5px 0 8px;gap:5px;
-  background:var(--bg2);border-bottom:0.5px solid var(--b2);
-  cursor:pointer;user-select:none;
-}
+/* rows */
+.row-c{height:32px;display:flex;align-items:center;padding:0 5px 0 8px;gap:5px;background:var(--bg2);border-bottom:0.5px solid var(--b2);cursor:pointer;user-select:none;}
 .row-c:hover{background:var(--bg3);}
 .row-c.sel{border-left:3px solid #1D9E75;padding-left:5px;}
-
-/* PROJECT row */
-.row-p{
-  height:30px;display:flex;align-items:center;padding:0 5px 0 20px;gap:4px;
-  background:var(--bg);border-bottom:0.5px solid var(--b);
-  cursor:pointer;user-select:none;overflow:hidden;transition:height .13s,opacity .13s;
-}
+.row-p{height:30px;display:flex;align-items:center;padding:0 5px 0 20px;gap:4px;background:var(--bg);border-bottom:0.5px solid var(--b);cursor:pointer;user-select:none;overflow:hidden;transition:height .13s,opacity .13s;}
 .row-p:hover{background:var(--bg2);}
 .row-p.sel{border-left:2px solid #1D9E75;padding-left:18px;}
 .row-p.hidden{height:0;opacity:0;pointer-events:none;border:none;}
-
-/* TASK row */
-.row-t{
-  height:33px;display:flex;align-items:center;padding:0 7px 0 32px;gap:4px;
-  background:var(--bg);border-bottom:0.5px solid var(--b);
-  cursor:pointer;overflow:hidden;transition:height .13s,opacity .13s;
-}
+.row-p.dragging{opacity:0.4;}
+.row-t{height:33px;display:flex;align-items:center;padding:0 7px 0 32px;gap:4px;background:var(--bg);border-bottom:0.5px solid var(--b);cursor:pointer;overflow:hidden;transition:height .13s,opacity .13s;}
 .row-t:hover{background:var(--bg2);}
 .row-t.hidden{height:0;opacity:0;pointer-events:none;border:none;}
+.row-t.dragging{opacity:0.4;}
+
+/* drag handle */
+.dh{font-size:11px;color:var(--text3);cursor:grab;flex-shrink:0;padding:0 2px;opacity:0;transition:opacity .15s;}
+.row-p:hover .dh,.row-t:hover .dh{opacity:1;}
+.dh:active{cursor:grabbing;}
+
+/* drop zone */
+.dz{height:0;transition:height .12s,background .12s;overflow:hidden;position:relative;}
+.dz.over{height:4px;background:#1D9E75;}
 
 /* right rows */
 .rrow-c{height:32px;background:var(--bg2);border-bottom:0.5px solid var(--b2);position:relative;}
-.rrow-c.sel{border-left:2px solid #1D9E75;}
 .rrow-p{height:30px;border-bottom:0.5px solid var(--b);position:relative;overflow:hidden;transition:height .13s;}
 .rrow-p.hidden{height:0;border:none;}
 .rrow-t{height:33px;border-bottom:0.5px solid var(--b);position:relative;overflow:hidden;transition:height .13s;}
 .rrow-t.hidden{height:0;border:none;}
+.rrow-dz{height:0;transition:height .12s;}
+.rrow-dz.over{height:4px;background:#1D9E75;}
 
-/* right header */
 #rhdr{position:sticky;top:0;z-index:5;background:var(--bg2);}
 #mhdr{height:22px;position:relative;overflow:hidden;border-bottom:0.5px solid var(--b2);}
 #shdr{height:0;position:relative;overflow:hidden;border-bottom:0.5px solid var(--b);transition:height .12s;}
 
-/* collapse icon */
 .ci{font-size:9px;color:var(--text3);flex-shrink:0;transition:transform .15s;width:11px;text-align:center;display:inline-block;}
 .ci.o{transform:rotate(0deg);}
 .ci.c{transform:rotate(-90deg);}
-
-/* progress mini bar */
 .pbar{width:28px;height:3px;border-radius:2px;background:var(--b);overflow:hidden;flex-shrink:0;}
 .pbar-f{height:100%;border-radius:2px;}
 
@@ -131,7 +126,6 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
 .obs-ft{display:flex;align-items:center;gap:7px;}
 .obs-ok{font-size:11px;color:#1D9E75;opacity:0;transition:opacity .4s;}
 .obs-ok.show{opacity:1;}
-
 .empty{padding:44px 14px;text-align:center;font-size:13px;color:var(--text2);line-height:1.9;}
 </style>
 </head>
@@ -166,7 +160,7 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
   <span><span class="dot" style="background:#D85A30"></span>Crítico/Vencido</span>
   <span><span class="dot" style="background:#639922"></span>Completo</span>
   <span><span style="display:inline-block;width:2px;height:11px;background:#E24B4A;border-radius:1px;"></span>&nbsp;Hoy</span>
-  <span style="color:var(--text3);">▾ colapsar · click proyecto = observaciones</span>
+  <span style="color:var(--text3);">⠿ arrastrar · ▾ colapsar · click proyecto = observaciones</span>
 </div>
 
 <div class="gm" id="gm" style="height:500px;">
@@ -204,12 +198,15 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
 
 <script>
 const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-const CC=['#1D9E75','#378ADD','#BA7517','#993556','#3B6D11','#533AB7','#993C1D','#185FA5','#BA1757','#0F6E56'];
+const COLORS=['#1D9E75','#378ADD','#BA7517','#993556','#3B6D11','#533AB7','#993C1D','#185FA5','#BA1757','#5D6D7E'];
 const DWM={dias:20,semanas:5,meses:1.5};
-const KEY='lucci-g4';
+const KEY='lucci-g5';
 
 let D={clients:[]},FC={},ZOOM='semanas';
-let CC_={},CP_={},SEL=null; // collapsed clients, collapsed projects, selected project id
+let CC_={},CP_={},SEL=null;
+
+// ── Drag state ─────────────────────────────────────────────
+let DRAG={active:false,type:null,cid:null,pid:null,tid:null};
 
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -231,27 +228,16 @@ function stColor(t){
   return t.progress>=exp-15?'#1D9E75':t.progress>=exp-30?'#EF9F27':'#D85A30';
 }
 
-// Client health color: worst task color across all projects
 function clientColor(cl){
   const tasks=(cl.projects||[]).flatMap(p=>p.tasks||[]);
   if(!tasks.length)return'#999';
-  const colors=tasks.map(stColor);
-  if(colors.includes('#D85A30'))return'#D85A30';
-  if(colors.includes('#EF9F27'))return'#EF9F27';
-  if(colors.every(c=>c==='#639922'))return'#639922';
+  const c=tasks.map(stColor);
+  if(c.includes('#D85A30'))return'#D85A30';
+  if(c.includes('#EF9F27'))return'#EF9F27';
+  if(c.every(x=>x==='#639922'))return'#639922';
   return'#1D9E75';
 }
 
-// Project span bar for client row
-function clientSpan(cl){
-  const tasks=(cl.projects||[]).flatMap(p=>p.tasks||[]);
-  if(!tasks.length)return null;
-  const starts=tasks.map(t=>new Date(t.startDate+'T00:00:00'));
-  const ends=tasks.map(t=>endDate(t));
-  return{start:new Date(Math.min(...starts)),end:new Date(Math.max(...ends))};
-}
-
-// Project aggregated progress
 function projProgress(p){
   const tasks=p.tasks||[];
   if(!tasks.length)return 0;
@@ -267,22 +253,23 @@ function taskBar(t){
   return{x,w:Math.max((Math.min(eo,rng)+1)*DW-x,4)};
 }
 
-function spanBar(span){
-  if(!span)return null;
-  const DW=gDW(),from=gFrom(),to=gTo();
-  if(span.end<from||span.start>to)return null;
-  const so=dOff(span.start),eo=dOff(span.end),rng=Math.round((to-from)/86400000);
-  const x=Math.max(0,so)*DW;
-  return{x,w:Math.max((Math.min(eo,rng)+1)*DW-x,4)};
+function clientSpanBar(cl){
+  const tasks=(cl.projects||[]).flatMap(p=>p.tasks||[]);
+  if(!tasks.length)return null;
+  const from=gFrom(),to=gTo(),DW=gDW();
+  const starts=tasks.map(t=>new Date(t.startDate+'T00:00:00'));
+  const ends=tasks.map(t=>endDate(t));
+  const s=new Date(Math.min(...starts)),e=new Date(Math.max(...ends));
+  if(e<from||s>to)return null;
+  const rng=Math.round((to-from)/86400000);
+  const x=Math.max(0,dOff(s))*DW;
+  return{x,w:Math.max((Math.min(dOff(e),rng)+1)*DW-x,4)};
 }
 
-// ── Storage ──
+// ── Storage ──────────────────────────────────────────────────
 function sv(){
-  try{localStorage.setItem(KEY,JSON.stringify({
-    d:D,z:ZOOM,cc:CC_,cp:CP_,
-    f:document.getElementById('from-d').value,
-    t:document.getElementById('to-d').value,
-  }));}catch(e){}
+  try{localStorage.setItem(KEY,JSON.stringify({d:D,z:ZOOM,cc:CC_,cp:CP_,f:document.getElementById('from-d').value,t:document.getElementById('to-d').value}));}
+  catch(e){}
 }
 function ld(){
   try{
@@ -298,21 +285,21 @@ function ld(){
   }catch(e){}
 }
 
-// ── Controls ──
+// ── Controls ─────────────────────────────────────────────────
 function setZ(z){ZOOM=z;['dias','semanas','meses'].forEach(k=>document.getElementById('z-'+k).classList.toggle('active',k===z));document.getElementById('rp')._s=false;render();goToday();}
 function onRange(){document.getElementById('rp')._s=false;render();}
 function goToday(){const rp=document.getElementById('rp'),now=new Date(),from=gFrom(),to=gTo();if(now<from||now>to)return;rp.scrollLeft=Math.max(0,dOff(now)*gDW()-170);}
 function toggleCC(cid,e){e.stopPropagation();CC_[cid]=!CC_[cid];sv();render();}
 function toggleCP(pid,e){e.stopPropagation();CP_[pid]=!CP_[pid];sv();render();}
 
-// ── Obs ──
+// ── Obs ──────────────────────────────────────────────────────
 function selectProj(pid){
   if(SEL===pid){closeObs();return;}
   SEL=pid;
-  const {cl,p}=findProj(pid);if(!p)return;
+  const{cl,p}=findProj(pid);if(!p)return;
   document.getElementById('obs-pn').textContent=p.name||'';
   document.getElementById('obs-pc').textContent=cl?'Cliente: '+cl.name:'';
-  document.getElementById('obs-dot').style.background=cl?.color||'#1D9E75';
+  document.getElementById('obs-dot').style.background=p.color||cl?.color||'#1D9E75';
   document.getElementById('obs-ta').value=p.obs||'';
   document.getElementById('obs-last').textContent=fmtDT(p.obsDate);
   document.getElementById('obs-ok').classList.remove('show');
@@ -338,14 +325,97 @@ function findProj(pid){
   return{};
 }
 
-// ── Render ──
+// ── Color picker ─────────────────────────────────────────────
+let PICKED_COLOR=COLORS[0];
+
+function renderColorPicker(selectedColor){
+  PICKED_COLOR=selectedColor||COLORS[0];
+  return`<div class="cp-wrap">
+    <label class="fl">Color</label>
+    <div class="cp-swatches" id="cp-sw">
+      ${COLORS.map(c=>`<div class="cp-sw${c===PICKED_COLOR?' sel':''}" style="background:${c};" onclick="pickColor('${c}')"></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function pickColor(c){
+  PICKED_COLOR=c;
+  document.querySelectorAll('.cp-sw').forEach(el=>{
+    el.classList.toggle('sel',el.style.background===c||rgbToHex(el.style.background)===c);
+  });
+}
+
+function rgbToHex(rgb){
+  const m=rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if(!m)return rgb;
+  return'#'+[m[1],m[2],m[3]].map(x=>parseInt(x).toString(16).padStart(2,'0')).join('');
+}
+
+// ── Drag & Drop ───────────────────────────────────────────────
+function onDragStart(e,type,cid,pid,tid){
+  DRAG={active:true,type,cid,pid,tid};
+  e.dataTransfer.effectAllowed='move';
+  e.currentTarget.classList.add('dragging');
+}
+
+function onDragEnd(e){
+  DRAG={active:false};
+  document.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.dz.over,.rrow-dz.over').forEach(el=>el.classList.remove('over'));
+}
+
+function onDzOver(e,dzEl,rdzId){
+  if(!DRAG.active)return;
+  e.preventDefault();
+  document.querySelectorAll('.dz.over').forEach(el=>{if(el!==dzEl)el.classList.remove('over');});
+  dzEl.classList.add('over');
+  if(rdzId){
+    document.querySelectorAll('.rrow-dz.over').forEach(el=>el.classList.remove('over'));
+    const rEl=document.getElementById(rdzId);if(rEl)rEl.classList.add('over');
+  }
+}
+
+function onDzLeave(dzEl,rdzId){
+  dzEl.classList.remove('over');
+  if(rdzId){const rEl=document.getElementById(rdzId);if(rEl)rEl.classList.remove('over');}
+}
+
+function onDzDrop(e,type,cid,pid,insertBefore){
+  e.preventDefault();
+  document.querySelectorAll('.dz.over,.rrow-dz.over').forEach(el=>el.classList.remove('over'));
+  if(!DRAG.active||DRAG.type!==type)return;
+
+  if(type==='proj'){
+    const cl=(D.clients||[]).find(x=>x.id===cid);if(!cl)return;
+    const fromIdx=cl.projects.findIndex(p=>p.id===DRAG.pid);
+    if(fromIdx===-1)return;
+    const proj=cl.projects.splice(fromIdx,1)[0];
+    let toIdx=cl.projects.findIndex(p=>p.id===insertBefore);
+    if(toIdx===-1)toIdx=cl.projects.length;
+    cl.projects.splice(toIdx,0,proj);
+  }
+
+  if(type==='task'){
+    const{p}=findProj(pid);if(!p)return;
+    const fromIdx=p.tasks.findIndex(t=>t.id===DRAG.tid);
+    if(fromIdx===-1)return;
+    const task=p.tasks.splice(fromIdx,1)[0];
+    let toIdx=p.tasks.findIndex(t=>t.id===insertBefore);
+    if(toIdx===-1)toIdx=p.tasks.length;
+    p.tasks.splice(toIdx,0,task);
+  }
+
+  DRAG={active:false};
+  sv();render();
+}
+
+// ── Render ────────────────────────────────────────────────────
 function render(){
   const DW=gDW(),from=gFrom(),to=gTo();
   if(to<=from)return;
   const rdays=Math.round((to-from)/86400000)+1,TW=rdays*DW;
   const isDias=ZOOM==='dias',hdrH=isDias?46:22;
   const clients=D.clients||[];
-
   document.getElementById('lhdr').style.height=hdrH+'px';
 
   let lh='',rh='',totalH=0;
@@ -354,65 +424,88 @@ function render(){
     lh='<div class="empty">Sin clientes aún.<br>Usá <strong>+ Cliente</strong> para empezar.</div>';
   } else {
     clients.forEach(cl=>{
-      const cCol=clientColor(cl),cC=!!CC_[cl.id],span=clientSpan(cl);
+      const cCol=clientColor(cl),cC=!!CC_[cl.id];
       const projs=cl.projects||[];
-      const totalT=projs.reduce((s,p)=>(s+(p.tasks||[]).length),0);
+      const totalT=projs.reduce((s,p)=>s+(p.tasks||[]).length,0);
       const avgP=projs.length?Math.round(projs.reduce((s,p)=>s+projProgress(p),0)/projs.length):0;
+      const csb=clientSpanBar(cl);
 
-      // CLIENT left row
       lh+=`<div class="row-c" onclick="toggleCC('${cl.id}',event)">
         <span class="ci ${cC?'c':'o'}">▾</span>
         <span style="width:9px;height:9px;border-radius:50%;background:${cCol};display:inline-block;flex-shrink:0;"></span>
         <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cl.name)}</span>
-        <span style="font-size:10px;color:var(--text3);flex-shrink:0;white-space:nowrap;">${projs.length}p · ${totalT}t · ${avgP}%</span>
+        <span style="font-size:10px;color:var(--text3);flex-shrink:0;white-space:nowrap;">${projs.length}p·${totalT}t·${avgP}%</span>
         <button class="sm" onclick="event.stopPropagation();openCF('${cl.id}')" title="Editar cliente">✏</button>
         <button class="sm" onclick="event.stopPropagation();openPF('${cl.id}',null)" title="Nuevo proyecto">+</button>
       </div>`;
 
-      // CLIENT right row — span bar
-      const sb=spanBar(span);
       rh+=`<div class="rrow-c">
-        ${sb?`<div style="position:absolute;left:${sb.x}px;width:${sb.w}px;top:10px;height:12px;border-radius:3px;background:${cCol}18;border:0.5px solid ${cCol}55;pointer-events:none;"></div>`:''}
+        ${csb?`<div style="position:absolute;left:${csb.x}px;width:${csb.w}px;top:10px;height:12px;border-radius:3px;background:${cCol}18;border:0.5px solid ${cCol}55;pointer-events:none;"></div>`:''}
       </div>`;
       totalH+=32;
 
-      projs.forEach(p=>{
+      projs.forEach((p,pi)=>{
         const pC=!!CP_[p.id],isSel=SEL===p.id,prog=projProgress(p);
-        const pCol=cl.color||CC[0],hasObs=p.obs&&p.obs.trim().length>0;
+        const pCol=p.color||cl.color||COLORS[0];
+        const hasObs=p.obs&&p.obs.trim().length>0;
         const tasks=p.tasks||[];
+        const hidden=cC;
 
-        // PROJECT left row
-        lh+=`<div class="row-p${cC?' hidden':''}${isSel?' sel':''}" onclick="selectProj('${p.id}')">
+        // Drop zone before each project
+        const dzId=`dz-p-${cl.id}-${pi}`;
+        const rdzId=`rdz-p-${cl.id}-${pi}`;
+        lh+=`<div class="dz${hidden?' hidden':''}" id="${dzId}"
+          ondragover="onDzOver(event,this,'${rdzId}')"
+          ondragleave="onDzLeave(this,'${rdzId}')"
+          ondrop="onDzDrop(event,'proj','${cl.id}',null,'${p.id}')"></div>`;
+        rh+=`<div class="rrow-dz${hidden?' hidden':''}" id="${rdzId}"></div>`;
+
+        lh+=`<div class="row-p${hidden?' hidden':''}${isSel?' sel':''}"
+          draggable="true"
+          ondragstart="onDragStart(event,'proj','${cl.id}','${p.id}',null)"
+          ondragend="onDragEnd(event)"
+          onclick="selectProj('${p.id}')">
+          <span class="dh" onclick="event.stopPropagation()">⠿</span>
           <span class="ci ${pC?'c':'o'}" onclick="toggleCP('${p.id}',event)">▾</span>
           <span style="width:7px;height:7px;border-radius:50%;background:${pCol};display:inline-block;flex-shrink:0;"></span>
           <span style="flex:1;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.name)}</span>
           ${hasObs?`<span style="font-size:8px;color:#1D9E75;flex-shrink:0;">●</span>`:''}
-          <div class="pbar" style="flex-shrink:0;"><div class="pbar-f" style="width:${prog}%;background:${stColor(tasks[0]||{progress:prog>=100?100:0,startDate:new Date().toISOString().slice(0,10),duration:1})};"></div></div>
+          <div class="pbar"><div class="pbar-f" style="width:${prog}%;background:${pCol};"></div></div>
           <span style="font-size:10px;color:var(--text3);min-width:22px;text-align:right;">${prog}%</span>
           <button class="sm" onclick="event.stopPropagation();openPF('${cl.id}','${p.id}')" title="Editar proyecto">✏</button>
           <button class="sm" onclick="event.stopPropagation();openTF('${p.id}',null)" title="Nueva tarea">+</button>
         </div>`;
 
-        // PROJECT right row — aggregate bar
+        // Project right row
         const allBars=tasks.map(t=>taskBar(t)).filter(Boolean);
         let projRBar='';
-        if(allBars.length){
-          const minX=Math.min(...allBars.map(b=>b.x));
-          const maxX=Math.max(...allBars.map(b=>b.x+b.w));
-          const pw=maxX-minX,sc=stColor(tasks[0]||{progress:0,startDate:new Date().toISOString().slice(0,10),duration:1});
-          projRBar=`<div style="position:absolute;left:${minX}px;width:${pw}px;top:8px;height:14px;border-radius:3px;background:${sc}18;border:0.5px solid ${sc}44;pointer-events:none;">
-            <div style="width:${prog}%;height:100%;background:${sc};opacity:0.35;border-radius:2px 0 0 2px;"></div>
+        if(allBars.length&&!hidden){
+          const minX=Math.min(...allBars.map(b=>b.x)),maxX=Math.max(...allBars.map(b=>b.x+b.w));
+          projRBar=`<div style="position:absolute;left:${minX}px;width:${maxX-minX}px;top:8px;height:14px;border-radius:3px;background:${pCol}18;border:0.5px solid ${pCol}44;pointer-events:none;">
+            <div style="width:${prog}%;height:100%;background:${pCol};opacity:0.35;border-radius:2px 0 0 2px;"></div>
           </div>`;
         }
-        rh+=`<div class="rrow-p${cC?' hidden':''}">${projRBar}</div>`;
-        if(!cC)totalH+=30;
+        rh+=`<div class="rrow-p${hidden?' hidden':''}">${projRBar}</div>`;
+        if(!hidden)totalH+=30;
 
-        tasks.forEach(t=>{
+        tasks.forEach((t,ti)=>{
           const bar=taskBar(t),sc=stColor(t),tp=Math.round(t.progress);
-          const hidden=cC||pC;
+          const thidden=hidden||pC;
+          const tdzId=`dz-t-${p.id}-${ti}`;
+          const trdzId=`rdz-t-${p.id}-${ti}`;
 
-          // TASK left row
-          lh+=`<div class="row-t${hidden?' hidden':''}" onclick="openTF('${p.id}','${t.id}')">
+          lh+=`<div class="dz${thidden?' hidden':''}" id="${tdzId}"
+            ondragover="onDzOver(event,this,'${trdzId}')"
+            ondragleave="onDzLeave(this,'${trdzId}')"
+            ondrop="onDzDrop(event,'task',null,'${p.id}','${t.id}')"></div>`;
+          rh+=`<div class="rrow-dz${thidden?' hidden':''}" id="${trdzId}"></div>`;
+
+          lh+=`<div class="row-t${thidden?' hidden':''}"
+            draggable="true"
+            ondragstart="onDragStart(event,'task',null,'${p.id}','${t.id}')"
+            ondragend="onDragEnd(event)"
+            onclick="openTF('${p.id}','${t.id}')">
+            <span class="dh" onclick="event.stopPropagation()">⠿</span>
             <div style="flex:1;min-width:0;">
               <div style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</div>
               <div style="font-size:9px;color:var(--text2);">${fmtD(new Date(t.startDate+'T00:00:00'))} → ${fmtD(endDate(t))} · ${t.duration}d</div>
@@ -423,9 +516,8 @@ function render(){
             </div>
           </div>`;
 
-          // TASK right row
-          rh+=`<div class="rrow-t${hidden?' hidden':''}">`;
-          if(bar&&!hidden){
+          rh+=`<div class="rrow-t${thidden?' hidden':''}">`;
+          if(bar&&!thidden){
             const sl=bar.w>50;
             rh+=`<div onclick="openTF('${p.id}','${t.id}')" title="${esc(t.name)} · ${tp}%"
               style="position:absolute;left:${bar.x}px;width:${bar.w}px;top:7px;height:19px;
@@ -435,9 +527,27 @@ function render(){
             </div>`;
           }
           rh+=`</div>`;
-          if(!hidden)totalH+=33;
+          if(!thidden)totalH+=33;
         });
+
+        // Drop zone after last task (end of project)
+        const ldzId=`dz-t-${p.id}-last`;
+        const lrdzId=`rdz-t-${p.id}-last`;
+        lh+=`<div class="dz${(hidden||pC)?' hidden':''}" id="${ldzId}"
+          ondragover="onDzOver(event,this,'${lrdzId}')"
+          ondragleave="onDzLeave(this,'${lrdzId}')"
+          ondrop="onDzDrop(event,'task',null,'${p.id}',null)"></div>`;
+        rh+=`<div class="rrow-dz${(hidden||pC)?' hidden':''}" id="${lrdzId}"></div>`;
       });
+
+      // Drop zone after last project (end of client)
+      const ldzId=`dz-p-${cl.id}-last`;
+      const lrdzId=`rdz-p-${cl.id}-last`;
+      lh+=`<div class="dz${cC?' hidden':''}" id="${ldzId}"
+        ondragover="onDzOver(event,this,'${lrdzId}')"
+        ondragleave="onDzLeave(this,'${lrdzId}')"
+        ondrop="onDzDrop(event,'proj','${cl.id}',null,null)"></div>`;
+      rh+=`<div class="rrow-dz${cC?' hidden':''}" id="${lrdzId}"></div>`;
     });
   }
 
@@ -454,7 +564,6 @@ function render(){
   }
   mhdr.innerHTML=mh;
 
-  // Days sub-header
   const shdr=document.getElementById('shdr');
   if(isDias){
     shdr.style.height='24px';shdr.style.width=TW+'px';
@@ -467,10 +576,8 @@ function render(){
     shdr.innerHTML=sh;
   } else {shdr.style.height='0';shdr.innerHTML='';}
 
-  // Today line + stripes
   const now=new Date(),todOff=dOff(now);
   const todLine=todOff>=0&&todOff<rdays?`<div style="position:absolute;left:${todOff*DW+1}px;top:0;bottom:0;width:2px;background:#E24B4A;opacity:0.45;z-index:3;pointer-events:none;border-radius:1px;"></div>`:'';
-
   let stripes='';let ds=new Date(from.getFullYear(),from.getMonth(),1);let mi=0;
   while(ds<=to){
     if(mi%2===1){const mss=new Date(Math.max(ds,from)),mse=new Date(Math.min(new Date(ds.getFullYear(),ds.getMonth()+1,0),to));const sx=Math.max(0,dOff(mss))*DW,ex=(dOff(mse)+1)*DW;stripes+=`<div style="position:absolute;left:${sx}px;width:${ex-sx}px;top:0;bottom:0;background:rgba(0,0,0,0.012);pointer-events:none;"></div>`;}
@@ -487,8 +594,7 @@ function render(){
   if(!rp._s&&todOff>=0&&todOff<rdays){rp.scrollLeft=Math.max(0,todOff*DW-170);rp._s=true;}
 }
 
-// ── FORMS ──
-
+// ── FORMS ────────────────────────────────────────────────────
 function openCF(cid){
   FC={cid};
   const cl=cid?(D.clients||[]).find(x=>x.id===cid):null;
@@ -510,16 +616,15 @@ function openPF(cid,pid){
   FC={cid,pid};
   const cl=(D.clients||[]).find(x=>x.id===cid);
   const p=pid?(cl?.projects||[]).find(x=>x.id===pid):null;
+  const currentColor=p?.color||cl?.color||COLORS[0];
+  PICKED_COLOR=currentColor;
+
   document.getElementById('fa-t').innerHTML=`${p?'Editar proyecto':'Nuevo proyecto'} <span style="font-weight:400;color:var(--text2);">— ${esc(cl?.name||'')}</span>`;
   document.getElementById('fa-g').className='fag p';
   document.getElementById('fa-g').innerHTML=`
     <div><label class="fl">Nombre del proyecto</label><input id="fp-n" type="text" value="${esc(p?.name||'')}" placeholder="Ej: Cierre anual 2026"></div>
-    <div style="display:flex;gap:8px;">
-      <div style="flex:1;"><label class="fl">Color</label><select id="fp-c" style="width:100%;">
-        ${CC.map((c,i)=>`<option value="${c}"${(p?.color||cl?.color||CC[0])===c?' selected':''}style="background:${c}">Color ${i+1}</option>`).join('')}
-      </select></div>
-    </div>
-    <div class="fbt">
+    ${renderColorPicker(currentColor)}
+    <div class="fbt" style="padding-top:0;">
       <button class="pri" onclick="savePrj()">Guardar</button>
       ${p?`<button class="dan" onclick="delPrj('${cid}','${pid}')">Eliminar</button>`:''}
       <button onclick="closeF()">Cancelar</button>
@@ -567,26 +672,23 @@ function saveCl(){
   const name=document.getElementById('fc-n').value.trim();if(!name)return;
   if(!D.clients)D.clients=[];
   if(FC.cid){const cl=D.clients.find(x=>x.id===FC.cid);if(cl)cl.name=name;}
-  else D.clients.push({id:uid(),name,color:CC[D.clients.length%CC.length],projects:[]});
+  else D.clients.push({id:uid(),name,color:COLORS[D.clients.length%COLORS.length],projects:[]});
   sv();closeF();render();
 }
-
 function delCl(cid){
-  if(!confirm('¿Eliminar este cliente y todos sus proyectos y tareas?'))return;
+  if(!confirm('¿Eliminar este cliente y todos sus proyectos?'))return;
   D.clients=D.clients.filter(c=>c.id!==cid);
   sv();closeF();render();
 }
-
 function savePrj(){
   const name=document.getElementById('fp-n').value.trim();if(!name)return;
-  const color=document.getElementById('fp-c').value;
+  const color=PICKED_COLOR;
   const cl=(D.clients||[]).find(x=>x.id===FC.cid);if(!cl)return;
   if(!cl.projects)cl.projects=[];
   if(FC.pid){const p=cl.projects.find(x=>x.id===FC.pid);if(p){p.name=name;p.color=color;}}
   else cl.projects.push({id:uid(),name,color,tasks:[]});
   sv();closeF();render();
 }
-
 function delPrj(cid,pid){
   if(!confirm('¿Eliminar este proyecto y todas sus tareas?'))return;
   const cl=(D.clients||[]).find(x=>x.id===cid);if(!cl)return;
@@ -594,7 +696,6 @@ function delPrj(cid,pid){
   if(SEL===pid)closeObs();
   sv();closeF();render();
 }
-
 function saveTsk(){
   const name=document.getElementById('ft-n').value.trim(),startDate=document.getElementById('ft-s').value;
   const duration=Math.max(1,parseInt(document.getElementById('ft-d').value)||1);
@@ -606,7 +707,6 @@ function saveTsk(){
   else p.tasks.push({id:uid(),name,startDate,duration,progress});
   sv();closeF();render();
 }
-
 function delTsk(pid,tid){
   if(!confirm('¿Eliminar esta tarea?'))return;
   const{p}=findProj(pid);if(!p)return;
