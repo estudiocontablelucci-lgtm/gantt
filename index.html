@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gantt — Estudio Lucci</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #ffffff;
+    --bg2:      #f5f5f5;
+    --bg3:      #eeeeee;
+    --text:     #111111;
+    --text2:    #555555;
+    --text3:    #999999;
+    --border:   rgba(0,0,0,0.12);
+    --border2:  rgba(0,0,0,0.22);
+    --radius:   8px;
+    --radius-lg:12px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:     #1a1a1a;
+      --bg2:    #242424;
+      --bg3:    #2e2e2e;
+      --text:   #f0f0f0;
+      --text2:  #aaaaaa;
+      --text3:  #666666;
+      --border: rgba(255,255,255,0.1);
+      --border2:rgba(255,255,255,0.2);
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h1 span { color: var(--text3); font-weight: 400; font-size: 13px; }
+
+  /* ── Toolbar ── */
+  .tb { display: flex; gap: 7px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+
+  select, input[type="date"], input[type="text"], input[type="number"] {
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 5px 8px;
+    height: 30px;
+    outline: none;
+  }
+  select:focus, input:focus { border-color: #1D9E75; }
+
+  button {
+    font-size: 12px;
+    font-family: inherit;
+    background: none;
+    color: var(--text);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 5px 11px;
+    height: 30px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:hover { background: var(--bg2); }
+  button.primary { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  button.primary:hover { background: #17876A; }
+  button.danger { color: #D85A30; border-color: #D85A30; }
+  button.danger:hover { background: rgba(216,90,48,0.08); }
+  button.sm { font-size: 10px; padding: 2px 7px; height: 22px; }
+
+  .ztog { display: flex; border: 0.5px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
+  .ztog button { border: none; border-right: 0.5px solid var(--border2); border-radius: 0; padding: 5px 10px; height: 30px; color: var(--text2); }
+  .ztog button:last-child { border-right: none; }
+  .ztog button.active { background: var(--bg2); color: var(--text); font-weight: 500; }
+
+  .dsep { font-size: 11px; color: var(--text3); }
+
+  /* ── Legend ── */
+  .leg { display: flex; gap: 14px; margin-bottom: 10px; font-size: 11px; color: var(--text2); flex-wrap: wrap; align-items: center; }
+  .leg span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+  /* ── Form ── */
+  .fa {
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .fa.open { display: block; }
+  .fa-title { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+  .fa-grid { display: grid; gap: 8px; align-items: end; }
+  .fa-grid.proj { grid-template-columns: 1fr 1fr auto; }
+  .fa-grid.task { grid-template-columns: 2fr 1fr 1fr 1fr auto; }
+  @media (max-width: 700px) {
+    .fa-grid.proj, .fa-grid.task { grid-template-columns: 1fr; }
+  }
+  .fl { font-size: 11px; color: var(--text2); display: block; margin-bottom: 3px; }
+  .fa-grid input { width: 100%; }
+  .fa-btns { display: flex; gap: 6px; padding-top: 16px; }
+  #ep { margin-top: 7px; font-size: 11px; color: var(--text2); min-height: 15px; }
+
+  /* ── Gantt main ── */
+  .gm {
+    display: flex;
+    height: 500px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  /* Left panel */
+  .gl {
+    width: 288px;
+    min-width: 288px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 0.5px solid var(--border2);
+  }
+  .gl::-webkit-scrollbar { display: none; }
+
+  #lhdr {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-bottom: 0.5px solid var(--border2);
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .gpr-l {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 10px;
+    gap: 5px;
+    background: var(--bg2);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .gtr-l {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 7px 0 18px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    gap: 5px;
+    cursor: pointer;
+  }
+  .gtr-l:hover { background: var(--bg2); }
+
+  /* Right panel */
+  .gr { flex: 1; overflow: auto; }
+  .gr::-webkit-scrollbar { height: 5px; width: 5px; }
+  .gr::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  #rhdr { position: sticky; top: 0; z-index: 5; background: var(--bg2); }
+  #mhdr { height: 24px; position: relative; overflow: hidden; border-bottom: 0.5px solid var(--border2); }
+  #shdr { height: 0; position: relative; overflow: hidden; border-bottom: 0.5px solid var(--border); transition: height 0.12s; }
+
+  .gpr-r { height: 32px; background: var(--bg2); border-bottom: 0.5px solid var(--border); }
+  .gtr-r { height: 36px; border-bottom: 0.5px solid var(--border); position: relative; }
+
+  .empty-state {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.9;
+  }
+</style>
+</head>
+<body>
+
+<h1>Gantt <span>— Estudio Lucci &amp; Asociados</span></h1>
+
+<!-- Toolbar -->
+<div class="tb">
+  <select id="fc" onchange="render()"></select>
+  <span class="dsep">Período:</span>
+  <input type="date" id="from-d" value="2026-01-01" onchange="onRange()">
+  <span class="dsep">→</span>
+  <input type="date" id="to-d" value="2026-12-31" onchange="onRange()">
+  <div class="ztog">
+    <button id="z-dias"    onclick="setZ('dias')">Días</button>
+    <button id="z-semanas" onclick="setZ('semanas')" class="active">Semanas</button>
+    <button id="z-meses"   onclick="setZ('meses')">Meses</button>
+  </div>
+  <button onclick="goToday()">↗ Hoy</button>
+  <button class="primary" onclick="openPF(null)">+ Proyecto</button>
+</div>
+
+<!-- Form -->
+<div class="fa" id="fa">
+  <div class="fa-title" id="fa-title"></div>
+  <div class="fa-grid" id="fa-grid"></div>
+  <div id="ep"></div>
+</div>
+
+<!-- Legend -->
+<div class="leg">
+  <span><span class="dot" style="background:#1D9E75"></span>En curso</span>
+  <span><span class="dot" style="background:#EF9F27"></span>Atrasado</span>
+  <span><span class="dot" style="background:#D85A30"></span>Crítico / Vencido</span>
+  <span><span class="dot" style="background:#639922"></span>Completo</span>
+  <span><span style="display:inline-block;width:2px;height:12px;background:#E24B4A;border-radius:1px;"></span>&nbsp;Hoy</span>
+</div>
+
+<!-- Gantt -->
+<div class="gm">
+  <div class="gl" id="lp">
+    <div id="lhdr"><span>Proyecto / Tarea</span><span>Prog.</span></div>
+    <div id="lr"></div>
+  </div>
+  <div class="gr" id="rp">
+    <div id="rhdr">
+      <div id="mhdr"></div>
+      <div id="shdr"></div>
+    </div>
+    <div id="rr" style="position:relative;"></div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const MN  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const PC  = ['#1D9E75','#378ADD','#BA7517','#993556','#3B6D11','#533AB7','#993C1D','#185FA5'];
+const DWM = { dias: 20, semanas: 5, meses: 1.5 };
+const KEY  = 'lucci-gantt-v1';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let D    = { projects: [] };
+let FC   = {};
+let ZOOM = 'semanas';
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+const uid  = () => Math.random().toString(36).slice(2, 9);
+const esc  = s  => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const getFrom = () => new Date(document.getElementById('from-d').value + 'T00:00:00');
+const getTo   = () => new Date(document.getElementById('to-d').value   + 'T00:00:00');
+const getDW   = () => DWM[ZOOM];
+const dOff    = d  => Math.round((d - getFrom()) / 86400000);
+
+function endDate(t) {
+  const d = new Date(t.startDate + 'T00:00:00');
+  d.setDate(d.getDate() + t.duration - 1);
+  return d;
+}
+
+function fmtD(d) { return `${d.getDate()}/${d.getMonth() + 1}`; }
+
+function stColor(t) {
+  if (t.progress >= 100) return '#639922';
+  const now = new Date(), end = endDate(t), start = new Date(t.startDate + 'T00:00:00');
+  if (now > end)   return '#D85A30';
+  if (now < start) return '#1D9E75';
+  const exp = Math.min(99, ((now - start) / 86400000 / t.duration) * 100);
+  return t.progress >= exp - 15 ? '#1D9E75' : t.progress >= exp - 30 ? '#EF9F27' : '#D85A30';
+}
+
+function taskBar(t) {
+  const DW = getDW(), from = getFrom(), to = getTo();
+  const ts = new Date(t.startDate + 'T00:00:00'), te = endDate(t);
+  if (te < from || ts > to) return null;
+  const so  = dOff(ts), eo = dOff(te);
+  const rng = Math.round((to - from) / 86400000);
+  const x   = Math.max(0, so) * DW;
+  const w   = Math.max((Math.min(eo, rng) + 1) * DW - x, 4);
+  return { x, w };
+}
+
+// ── Persistence ────────────────────────────────────────────────────────────
+function sv() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      p: D.projects,
+      z: ZOOM,
+      f: document.getElementById('from-d').value,
+      t: document.getElementById('to-d').value,
+    }));
+  } catch(e) {}
+}
+
+function ld() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    D = { projects: s.p || [] };
+    if (s.z) ZOOM = s.z;
+    if (s.f) document.getElementById('from-d').value = s.f;
+    if (s.t) document.getElementById('to-d').value   = s.t;
+    ['dias','semanas','meses'].forEach(k =>
+      document.getElementById('z-' + k).classList.toggle('active', k === ZOOM));
+  } catch(e) {}
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+function getClients() {
+  return [...new Set(D.projects.map(p => p.client).filter(Boolean))];
+}
+function filtered() {
+  const v = document.getElementById('fc').value;
+  return v === 'all' ? D.projects : D.projects.filter(p => p.client === v);
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+function setZ(z) {
+  ZOOM = z;
+  ['dias','semanas','meses'].forEach(k =>
+    document.getElementById('z-' + k).classList.toggle('active', k === z));
+  document.getElementById('rp')._s = false;
+  render(); goToday();
+}
+
+function onRange() {
+  document.getElementById('rp')._s = false;
+  render();
+}
+
+function goToday() {
+  const rp = document.getElementById('rp'), now = new Date();
+  const from = getFrom(), to = getTo();
+  if (now < from || now > to) return;
+  rp.scrollLeft = Math.max(0, dOff(now) * getDW() - 170);
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderFilter() {
+  const sel = document.getElementById('fc'), cur = sel.value;
+  sel.innerHTML = '<option value="all">Todos los clientes</option>' +
+    getClients().map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(c)}</option>`).join('');
+}
+
+function render() {
+  renderFilter();
+  const DW = getDW(), from = getFrom(), to = getTo();
+  if (to <= from) return;
+  const rdays = Math.round((to - from) / 86400000) + 1;
+  const TW    = rdays * DW;
+  const isDias = ZOOM === 'dias';
+  const hdrH   = isDias ? 48 : 24;
+  const projs  = filtered();
+
+  // Left header height
+  document.getElementById('lhdr').style.height = hdrH + 'px';
+
+  // ── Left rows ──────────────────────────────────────────────────
+  let lh = '';
+  if (!projs.length) {
+    lh = `<div class="empty-state">Sin proyectos aún.<br>Creá uno con <strong>+ Proyecto</strong>.</div>`;
+  } else {
+    projs.forEach(p => {
+      const col = p.color || PC[0];
+      lh += `<div class="gpr-l">
+        <span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0;"></span>
+        <span style="flex:1;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(p.name)}">${esc(p.name)}</span>
+        <span style="font-size:10px;color:var(--text2);max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.client || '')}</span>
+        <button class="sm" onclick="openPF('${p.id}')" title="Editar proyecto">✏</button>
+        <button class="sm" onclick="openTF('${p.id}',null)" title="Nueva tarea">+</button>
+      </div>`;
+
+      (p.tasks || []).forEach(t => {
+        const sc = stColor(t), prog = Math.round(t.progress);
+        const end = endDate(t);
+        lh += `<div class="gtr-l" onclick="openTF('${p.id}','${t.id}')">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</div>
+            <div style="font-size:10px;color:var(--text2);">${fmtD(new Date(t.startDate + 'T00:00:00'))} → ${fmtD(end)} · ${t.duration}d</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+            <div style="width:30px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;">
+              <div style="width:${prog}%;height:100%;background:${sc};"></div>
+            </div>
+            <span style="font-size:10px;font-weight:500;color:${sc};min-width:24px;">${prog}%</span>
+          </div>
+        </div>`;
+      });
+    });
+  }
+  document.getElementById('lr').innerHTML = lh;
+
+  // ── Month header ───────────────────────────────────────────────
+  const mhdr = document.getElementById('mhdr');
+  mhdr.style.width = TW + 'px';
+  let mh = '';
+  let dm = new Date(from.getFullYear(), from.getMonth(), 1);
+  while (dm <= to) {
+    const ms = new Date(Math.max(dm, from));
+    const me = new Date(Math.min(new Date(dm.getFullYear(), dm.getMonth() + 1, 0), to));
+    const x  = Math.max(0, dOff(ms)) * DW;
+    const ex = (dOff(me) + 1) * DW;
+    mh += `<div style="position:absolute;left:${x}px;width:${ex - x}px;height:100%;display:flex;align-items:center;padding-left:5px;font-size:10px;font-weight:500;color:var(--text2);border-right:0.5px solid var(--border);overflow:hidden;white-space:nowrap;">${MN[dm.getMonth()]}${dm.getFullYear() !== 2026 ? ' ' + dm.getFullYear() : ''}</div>`;
+    dm = new Date(dm.getFullYear(), dm.getMonth() + 1, 1);
+  }
+  mhdr.innerHTML = mh;
+
+  // ── Sub-header (días zoom) ─────────────────────────────────────
+  const shdr = document.getElementById('shdr');
+  if (isDias) {
+    shdr.style.height = '24px';
+    shdr.style.width  = TW + 'px';
+    let sh = '';
+    let dd = new Date(from);
+    while (dd <= to) {
+      const off = dOff(dd), dow = dd.getDay();
+      const isWE  = dow === 0 || dow === 6;
+      const isMon = dow === 1;
+      sh += `<div style="position:absolute;left:${off * DW}px;width:${DW}px;height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text${isWE ? '3' : '2'});border-right:0.5px solid var(--border);${isMon ? 'font-weight:600;color:var(--text);' : ''}${isWE ? 'background:rgba(0,0,0,0.03);' : ''}overflow:hidden;">${dd.getDate()}</div>`;
+      dd = new Date(dd.getFullYear(), dd.getMonth(), dd.getDate() + 1);
+    }
+    shdr.innerHTML = sh;
+  } else {
+    shdr.style.height = '0';
+    shdr.innerHTML    = '';
+  }
+
+  // ── Right rows ─────────────────────────────────────────────────
+  const now    = new Date();
+  const todOff = dOff(now);
+  const todLine = todOff >= 0 && todOff < rdays
+    ? `<div style="position:absolute;left:${todOff * DW + 1}px;top:0;bottom:0;width:2px;background:#E24B4A;opacity:0.5;z-index:3;pointer-events:none;border-radius:1px;"></div>`
+    : '';
+
+  // Month stripes
+  let stripes = '';
+  let ds = new Date(from.getFullYear(), from.getMonth(), 1); let mi = 0;
+  while (ds <= to) {
+    if (mi % 2 === 1) {
+      const mss = new Date(Math.max(ds, from));
+      const mse = new Date(Math.min(new Date(ds.getFullYear(), ds.getMonth() + 1, 0), to));
+      const sx  = Math.max(0, dOff(mss)) * DW, ex = (dOff(mse) + 1) * DW;
+      stripes += `<div style="position:absolute;left:${sx}px;width:${ex - sx}px;top:0;bottom:0;background:rgba(0,0,0,0.013);pointer-events:none;"></div>`;
+    }
+    ds = new Date(ds.getFullYear(), ds.getMonth() + 1, 1); mi++;
+  }
+
+  // Weekend stripes (días zoom)
+  let wkStripes = '';
+  if (isDias) {
+    let dw2 = new Date(from);
+    while (dw2 <= to) {
+      const dow = dw2.getDay();
+      if (dow === 0 || dow === 6) {
+        const wx = dOff(dw2) * DW;
+        wkStripes += `<div style="position:absolute;left:${wx}px;width:${DW}px;top:0;bottom:0;background:rgba(0,0,0,0.025);pointer-events:none;"></div>`;
+      }
+      dw2 = new Date(dw2.getFullYear(), dw2.getMonth(), dw2.getDate() + 1);
+    }
+  }
+
+  let rh = '', totalH = 0;
+  projs.forEach(p => {
+    rh += `<div class="gpr-r"></div>`; totalH += 32;
+    (p.tasks || []).forEach(t => {
+      const bar = taskBar(t), sc = stColor(t), prog = Math.round(t.progress);
+      rh += `<div class="gtr-r">`;
+      if (bar) {
+        const sl = bar.w > 55;
+        rh += `<div onclick="openTF('${p.id}','${t.id}')" title="${esc(t.name)} · ${prog}%"
+          style="position:absolute;left:${bar.x}px;width:${bar.w}px;top:8px;height:20px;
+          border-radius:4px;background:${sc}28;border:0.5px solid ${sc}99;overflow:hidden;cursor:pointer;z-index:1;">
+          <div style="width:${prog}%;height:100%;background:${sc};opacity:0.62;border-radius:3px 0 0 3px;"></div>
+          ${sl ? `<span style="position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:500;color:${sc};white-space:nowrap;max-width:${bar.w - 10}px;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</span>` : ''}
+        </div>`;
+      }
+      rh += `</div>`; totalH += 36;
+    });
+  });
+
+  const rrEl = document.getElementById('rr');
+  rrEl.style.width     = TW + 'px';
+  rrEl.style.minHeight = totalH + 'px';
+  rrEl.innerHTML       = stripes + wkStripes + todLine + rh;
+
+  // Auto-scroll to today on first load
+  const rp = document.getElementById('rp');
+  if (!rp._s && todOff >= 0 && todOff < rdays) {
+    rp.scrollLeft = Math.max(0, todOff * DW - 170);
+    rp._s = true;
+  }
+}
+
+// ── Forms ──────────────────────────────────────────────────────────────────
+function openPF(pid) {
+  FC = { pid };
+  const p = pid ? D.projects.find(x => x.id === pid) : null;
+  const fa = document.getElementById('fa');
+  document.getElementById('fa-title').textContent = p ? 'Editar proyecto' : 'Nuevo proyecto';
+  document.getElementById('fa-grid').className = 'fa-grid proj';
+  document.getElementById('fa-grid').innerHTML = `
+    <div><label class="fl">Nombre del proyecto</label><input id="fp-n" type="text" value="${esc(p?.name || '')}" placeholder="Ej: Cierre anual García SRL"></div>
+    <div><label class="fl">Cliente</label><input id="fp-c" type="text" value="${esc(p?.client || '')}" list="cl-dl" placeholder="Ej: García SRL"></div>
+    <div class="fa-btns">
+      <button class="primary" onclick="savePrj()">Guardar</button>
+      ${p ? `<button class="danger" onclick="delPrj('${pid}')">Eliminar</button>` : ''}
+      <button onclick="closeF()">Cancelar</button>
+    </div>
+    <datalist id="cl-dl">${getClients().map(c => `<option value="${esc(c)}">`).join('')}</datalist>`;
+  document.getElementById('ep').textContent = '';
+  fa.classList.add('open');
+  document.getElementById('fp-n').focus();
+}
+
+function openTF(pid, tid) {
+  FC = { pid, tid };
+  const p = D.projects.find(x => x.id === pid);
+  const t = tid ? (p?.tasks || []).find(x => x.id === tid) : null;
+
+  // Pre-fill: día siguiente al fin de la última tarea del proyecto
+  let defStart = new Date().toISOString().slice(0, 10);
+  if (!tid && p?.tasks?.length) {
+    const latest = p.tasks.reduce((mx, tk) => {
+      const e = endDate(tk).toISOString().slice(0, 10);
+      return e > mx ? e : mx;
+    }, '');
+    if (latest) {
+      const nd = new Date(latest + 'T00:00:00');
+      nd.setDate(nd.getDate() + 1);
+      defStart = nd.toISOString().slice(0, 10);
+    }
+  }
+
+  const fa = document.getElementById('fa');
+  document.getElementById('fa-title').innerHTML =
+    `${t ? 'Editar tarea' : 'Nueva tarea'} <span style="font-weight:400;color:var(--text2);">— ${esc(p?.name || '')}</span>`;
+  document.getElementById('fa-grid').className = 'fa-grid task';
+  document.getElementById('fa-grid').innerHTML = `
+    <div><label class="fl">Nombre</label><input id="ft-n" type="text" value="${esc(t?.name || '')}" placeholder="Ej: Recopilación documentación"></div>
+    <div><label class="fl">Inicio</label><input id="ft-s" type="date" value="${t?.startDate || defStart}" oninput="upPv()"></div>
+    <div><label class="fl">Días</label><input id="ft-d" type="number" min="1" max="730" value="${t?.duration || 7}" oninput="upPv()"></div>
+    <div><label class="fl">Progreso %</label><input id="ft-p" type="number" min="0" max="100" value="${t?.progress || 0}"></div>
+    <div class="fa-btns">
+      <button class="primary" onclick="saveTsk()">Guardar</button>
+      ${t ? `<button class="danger" onclick="delTsk('${pid}','${tid}')">Eliminar</button>` : ''}
+      <button onclick="closeF()">Cancelar</button>
+    </div>`;
+  fa.classList.add('open');
+  upPv();
+  document.getElementById('ft-n').focus();
+}
+
+function upPv() {
+  const s = document.getElementById('ft-s')?.value;
+  const dur = parseInt(document.getElementById('ft-d')?.value) || 0;
+  const ep = document.getElementById('ep');
+  if (!s || !dur) { if (ep) ep.textContent = ''; return; }
+  const d = new Date(s + 'T00:00:00');
+  d.setDate(d.getDate() + dur - 1);
+  if (ep) ep.textContent = `Finaliza: ${d.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`;
+}
+
+function closeF() {
+  document.getElementById('fa').classList.remove('open');
+  FC = {};
+}
+
+function savePrj() {
+  const name   = document.getElementById('fp-n').value.trim();
+  const client = document.getElementById('fp-c').value.trim();
+  if (!name) return;
+  if (FC.pid) {
+    const p = D.projects.find(x => x.id === FC.pid);
+    if (p) { p.name = name; p.client = client; }
+  } else {
+    D.projects.push({ id: uid(), name, client, color: PC[D.projects.length % PC.length], tasks: [] });
+  }
+  sv(); closeF(); render();
+}
+
+function delPrj(id) {
+  if (!confirm('¿Eliminar este proyecto y todas sus tareas?')) return;
+  D.projects = D.projects.filter(p => p.id !== id);
+  sv(); closeF(); render();
+}
+
+function saveTsk() {
+  const name      = document.getElementById('ft-n').value.trim();
+  const startDate = document.getElementById('ft-s').value;
+  const duration  = Math.max(1, parseInt(document.getElementById('ft-d').value) || 1);
+  const progress  = Math.min(100, Math.max(0, parseInt(document.getElementById('ft-p').value) || 0));
+  if (!name || !startDate) return;
+  const p = D.projects.find(x => x.id === FC.pid);
+  if (!p) return;
+  if (!p.tasks) p.tasks = [];
+  if (FC.tid) {
+    const t = p.tasks.find(x => x.id === FC.tid);
+    if (t) { t.name = name; t.startDate = startDate; t.duration = duration; t.progress = progress; }
+  } else {
+    p.tasks.push({ id: uid(), name, startDate, duration, progress });
+  }
+  sv(); closeF(); render();
+}
+
+function delTsk(pid, tid) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  const p = D.projects.find(x => x.id === pid);
+  if (p) p.tasks = p.tasks.filter(t => t.id !== tid);
+  sv(); closeF(); render();
+}
+
+// ── Sync vertical scroll ───────────────────────────────────────────────────
+setTimeout(() => {
+  let lk = false;
+  const lp = document.getElementById('lp');
+  const rp = document.getElementById('rp');
+  rp.addEventListener('scroll', () => { if (lk) return; lk = true; lp.scrollTop = rp.scrollTop; lk = false; });
+  lp.addEventListener('scroll', () => { if (lk) return; lk = true; rp.scrollTop = lp.scrollTop; lk = false; });
+}, 250);
+
+// ── Init ───────────────────────────────────────────────────────────────────
+ld();
+render();
+</script>
+</body>
+</html>
