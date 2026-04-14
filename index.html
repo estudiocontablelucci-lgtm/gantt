@@ -164,7 +164,7 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
 <div class="gm" id="gm" style="height:500px;">
   <div class="gl" id="lp">
     <div id="lhdr" style="height:22px;"><span>Cliente / Proyecto / Tarea</span><span>Prog.</span></div>
-    <div id="lr"></div>
+    <div id="lr" style="position:relative;"></div>
   </div>
   <div class="gr" id="rp">
     <div id="rhdr"><div id="mhdr"></div><div id="shdr"></div></div>
@@ -356,7 +356,7 @@ function rgbToHex(rgb){
 let INDICATOR=null;
 
 function getIndicator(){
-  if(!INDICATOR){
+  if(!INDICATOR||!INDICATOR.isConnected){
     INDICATOR=document.createElement('div');
     INDICATOR.style.cssText='position:absolute;left:0;right:0;height:3px;background:#1D9E75;border-radius:2px;pointer-events:none;z-index:99;display:none;';
     document.getElementById('lr').appendChild(INDICATOR);
