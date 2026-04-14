@@ -377,25 +377,31 @@ function onDragStart(e,type,cid,pid,tid){
 
 function onDragEnd(e){
   e.target.classList.remove('dragging');
+
+  // Capturar estado de destino ANTES de que hideIndicator lo limpie
+  const dropType=DRAG.type, dropCid=DRAG.insertCid, dropPid=DRAG.insertPid;
+  const dropBefore=DRAG.insertBefore, dragPid=DRAG.pid, dragTid=DRAG.tid;
+  const wasActive=DRAG.active;
+
   hideIndicator();
 
-  if(!DRAG.active){DRAG={active:false};return;}
+  if(!wasActive){DRAG={active:false};return;}
 
-  if(DRAG.type==='proj'&&DRAG.insertCid){
-    const cl=(D.clients||[]).find(x=>x.id===DRAG.insertCid);if(!cl)return;
-    const fromIdx=cl.projects.findIndex(p=>p.id===DRAG.pid);if(fromIdx===-1)return;
+  if(dropType==='proj'&&dropCid){
+    const cl=(D.clients||[]).find(x=>x.id===dropCid);if(!cl){DRAG={active:false};return;}
+    const fromIdx=cl.projects.findIndex(p=>p.id===dragPid);if(fromIdx===-1){DRAG={active:false};return;}
     const proj=cl.projects.splice(fromIdx,1)[0];
-    let toIdx=DRAG.insertBefore?cl.projects.findIndex(p=>p.id===DRAG.insertBefore):-1;
+    let toIdx=dropBefore?cl.projects.findIndex(p=>p.id===dropBefore):-1;
     if(toIdx===-1)toIdx=cl.projects.length;
     cl.projects.splice(toIdx,0,proj);
     sv();render();
   }
 
-  if(DRAG.type==='task'&&DRAG.insertPid){
-    const{p}=findProj(DRAG.insertPid);if(!p)return;
-    const fromIdx=p.tasks.findIndex(t=>t.id===DRAG.tid);if(fromIdx===-1)return;
+  if(dropType==='task'&&dropPid){
+    const{p}=findProj(dropPid);if(!p){DRAG={active:false};return;}
+    const fromIdx=p.tasks.findIndex(t=>t.id===dragTid);if(fromIdx===-1){DRAG={active:false};return;}
     const task=p.tasks.splice(fromIdx,1)[0];
-    let toIdx=DRAG.insertBefore?p.tasks.findIndex(t=>t.id===DRAG.insertBefore):-1;
+    let toIdx=dropBefore?p.tasks.findIndex(t=>t.id===dropBefore):-1;
     if(toIdx===-1)toIdx=p.tasks.length;
     p.tasks.splice(toIdx,0,task);
     sv();render();
