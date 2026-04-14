@@ -95,8 +95,7 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
 .dh:active{cursor:grabbing;}
 
 /* drop zone */
-.dz{height:0;transition:height .12s,background .12s;overflow:hidden;position:relative;}
-.dz.over{height:4px;background:#1D9E75;}
+
 
 /* right rows */
 .rrow-c{height:32px;background:var(--bg2);border-bottom:0.5px solid var(--b2);position:relative;}
@@ -104,8 +103,7 @@ button.sm{font-size:10px;padding:1px 6px;height:20px;border-radius:4px;}
 .rrow-p.hidden{height:0;border:none;}
 .rrow-t{height:33px;border-bottom:0.5px solid var(--b);position:relative;overflow:hidden;transition:height .13s;}
 .rrow-t.hidden{height:0;border:none;}
-.rrow-dz{height:0;transition:height .12s;}
-.rrow-dz.over{height:4px;background:#1D9E75;}
+
 
 #rhdr{position:sticky;top:0;z-index:5;background:var(--bg2);}
 #mhdr{height:22px;position:relative;overflow:hidden;border-bottom:0.5px solid var(--b2);}
@@ -352,61 +350,108 @@ function rgbToHex(rgb){
 }
 
 // ── Drag & Drop ───────────────────────────────────────────────
+// Usamos dragover sobre las filas existentes — sin zonas invisibles
+// Una línea indicadora se dibuja encima/debajo según posición Y del cursor
+
+let INDICATOR=null;
+
+function getIndicator(){
+  if(!INDICATOR){
+    INDICATOR=document.createElement('div');
+    INDICATOR.style.cssText='position:absolute;left:0;right:0;height:3px;background:#1D9E75;border-radius:2px;pointer-events:none;z-index:99;display:none;';
+    document.getElementById('lr').appendChild(INDICATOR);
+  }
+  return INDICATOR;
+}
+
+function hideIndicator(){
+  const ind=getIndicator();ind.style.display='none';
+  DRAG.insertBefore=null;DRAG.insertCid=null;DRAG.insertPid=null;
+}
+
 function onDragStart(e,type,cid,pid,tid){
-  DRAG={active:true,type,cid,pid,tid};
+  DRAG={active:true,type,cid,pid,tid,insertBefore:null,insertCid:null,insertPid:null};
   e.dataTransfer.effectAllowed='move';
-  e.currentTarget.classList.add('dragging');
+  setTimeout(()=>e.target.classList.add('dragging'),0);
 }
 
 function onDragEnd(e){
-  DRAG={active:false};
-  document.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));
-  document.querySelectorAll('.dz.over,.rrow-dz.over').forEach(el=>el.classList.remove('over'));
-}
+  e.target.classList.remove('dragging');
+  hideIndicator();
 
-function onDzOver(e,dzEl,rdzId){
-  if(!DRAG.active)return;
-  e.preventDefault();
-  document.querySelectorAll('.dz.over').forEach(el=>{if(el!==dzEl)el.classList.remove('over');});
-  dzEl.classList.add('over');
-  if(rdzId){
-    document.querySelectorAll('.rrow-dz.over').forEach(el=>el.classList.remove('over'));
-    const rEl=document.getElementById(rdzId);if(rEl)rEl.classList.add('over');
-  }
-}
+  if(!DRAG.active){DRAG={active:false};return;}
 
-function onDzLeave(dzEl,rdzId){
-  dzEl.classList.remove('over');
-  if(rdzId){const rEl=document.getElementById(rdzId);if(rEl)rEl.classList.remove('over');}
-}
-
-function onDzDrop(e,type,cid,pid,insertBefore){
-  e.preventDefault();
-  document.querySelectorAll('.dz.over,.rrow-dz.over').forEach(el=>el.classList.remove('over'));
-  if(!DRAG.active||DRAG.type!==type)return;
-
-  if(type==='proj'){
-    const cl=(D.clients||[]).find(x=>x.id===cid);if(!cl)return;
-    const fromIdx=cl.projects.findIndex(p=>p.id===DRAG.pid);
-    if(fromIdx===-1)return;
+  if(DRAG.type==='proj'&&DRAG.insertCid){
+    const cl=(D.clients||[]).find(x=>x.id===DRAG.insertCid);if(!cl)return;
+    const fromIdx=cl.projects.findIndex(p=>p.id===DRAG.pid);if(fromIdx===-1)return;
     const proj=cl.projects.splice(fromIdx,1)[0];
-    let toIdx=cl.projects.findIndex(p=>p.id===insertBefore);
+    let toIdx=DRAG.insertBefore?cl.projects.findIndex(p=>p.id===DRAG.insertBefore):-1;
     if(toIdx===-1)toIdx=cl.projects.length;
     cl.projects.splice(toIdx,0,proj);
+    sv();render();
   }
 
-  if(type==='task'){
-    const{p}=findProj(pid);if(!p)return;
-    const fromIdx=p.tasks.findIndex(t=>t.id===DRAG.tid);
-    if(fromIdx===-1)return;
+  if(DRAG.type==='task'&&DRAG.insertPid){
+    const{p}=findProj(DRAG.insertPid);if(!p)return;
+    const fromIdx=p.tasks.findIndex(t=>t.id===DRAG.tid);if(fromIdx===-1)return;
     const task=p.tasks.splice(fromIdx,1)[0];
-    let toIdx=p.tasks.findIndex(t=>t.id===insertBefore);
+    let toIdx=DRAG.insertBefore?p.tasks.findIndex(t=>t.id===DRAG.insertBefore):-1;
     if(toIdx===-1)toIdx=p.tasks.length;
     p.tasks.splice(toIdx,0,task);
+    sv();render();
   }
 
   DRAG={active:false};
-  sv();render();
+}
+
+function onRowDragOver(e,type,cid,pid,tid){
+  if(!DRAG.active||DRAG.type!==type)return;
+  // No soltar sobre sí mismo
+  if(type==='proj'&&tid===DRAG.pid)return;
+  if(type==='task'&&tid===DRAG.tid)return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+
+  const rect=e.currentTarget.getBoundingClientRect();
+  const mid=rect.top+rect.height/2;
+  const above=e.clientY<mid;
+
+  // Mostrar indicador
+  const lpRect=document.getElementById('lr').getBoundingClientRect();
+  const ind=getIndicator();
+  ind.style.display='block';
+  ind.style.top=(rect.top - lpRect.top + (above?0:rect.height)-1)+'px';
+
+  if(type==='proj'){
+    DRAG.insertCid=cid;
+    DRAG.insertBefore=above?tid:null;
+    // Si es debajo, insertBefore = próximo proyecto
+    if(!above){
+      const cl=(D.clients||[]).find(x=>x.id===cid);
+      if(cl){
+        const idx=cl.projects.findIndex(p=>p.id===tid);
+        DRAG.insertBefore=idx<cl.projects.length-1?cl.projects[idx+1].id:null;
+      }
+    }
+  }
+  if(type==='task'){
+    DRAG.insertPid=pid;
+    DRAG.insertBefore=above?tid:null;
+    if(!above){
+      const{p}=findProj(pid);
+      if(p){
+        const idx=p.tasks.findIndex(t=>t.id===tid);
+        DRAG.insertBefore=idx<p.tasks.length-1?p.tasks[idx+1].id:null;
+      }
+    }
+  }
+}
+
+function onRowDragLeave(e){
+  // Solo ocultar si salimos del panel izquierdo completo
+  if(!document.getElementById('lr').contains(e.relatedTarget)){
+    hideIndicator();
+  }
 }
 
 // ── Render ────────────────────────────────────────────────────
@@ -451,19 +496,14 @@ function render(){
         const tasks=p.tasks||[];
         const hidden=cC;
 
-        // Drop zone before each project
-        const dzId=`dz-p-${cl.id}-${pi}`;
-        const rdzId=`rdz-p-${cl.id}-${pi}`;
-        lh+=`<div class="dz${hidden?' hidden':''}" id="${dzId}"
-          ondragover="onDzOver(event,this,'${rdzId}')"
-          ondragleave="onDzLeave(this,'${rdzId}')"
-          ondrop="onDzDrop(event,'proj','${cl.id}',null,'${p.id}')"></div>`;
-        rh+=`<div class="rrow-dz${hidden?' hidden':''}" id="${rdzId}"></div>`;
+
 
         lh+=`<div class="row-p${hidden?' hidden':''}${isSel?' sel':''}"
           draggable="true"
           ondragstart="onDragStart(event,'proj','${cl.id}','${p.id}',null)"
           ondragend="onDragEnd(event)"
+          ondragover="onRowDragOver(event,'proj','${cl.id}','${p.id}','${p.id}')"
+          ondragleave="onRowDragLeave(event)"
           onclick="selectProj('${p.id}')">
           <span class="dh" onclick="event.stopPropagation()">⠿</span>
           <span class="ci ${pC?'c':'o'}" onclick="toggleCP('${p.id}',event)">▾</span>
@@ -494,16 +534,14 @@ function render(){
           const tdzId=`dz-t-${p.id}-${ti}`;
           const trdzId=`rdz-t-${p.id}-${ti}`;
 
-          lh+=`<div class="dz${thidden?' hidden':''}" id="${tdzId}"
-            ondragover="onDzOver(event,this,'${trdzId}')"
-            ondragleave="onDzLeave(this,'${trdzId}')"
-            ondrop="onDzDrop(event,'task',null,'${p.id}','${t.id}')"></div>`;
-          rh+=`<div class="rrow-dz${thidden?' hidden':''}" id="${trdzId}"></div>`;
+
 
           lh+=`<div class="row-t${thidden?' hidden':''}"
             draggable="true"
             ondragstart="onDragStart(event,'task',null,'${p.id}','${t.id}')"
             ondragend="onDragEnd(event)"
+            ondragover="onRowDragOver(event,'task','${cl.id}','${p.id}','${t.id}')"
+            ondragleave="onRowDragLeave(event)"
             onclick="openTF('${p.id}','${t.id}')">
             <span class="dh" onclick="event.stopPropagation()">⠿</span>
             <div style="flex:1;min-width:0;">
@@ -530,24 +568,10 @@ function render(){
           if(!thidden)totalH+=33;
         });
 
-        // Drop zone after last task (end of project)
-        const ldzId=`dz-t-${p.id}-last`;
-        const lrdzId=`rdz-t-${p.id}-last`;
-        lh+=`<div class="dz${(hidden||pC)?' hidden':''}" id="${ldzId}"
-          ondragover="onDzOver(event,this,'${lrdzId}')"
-          ondragleave="onDzLeave(this,'${lrdzId}')"
-          ondrop="onDzDrop(event,'task',null,'${p.id}',null)"></div>`;
-        rh+=`<div class="rrow-dz${(hidden||pC)?' hidden':''}" id="${lrdzId}"></div>`;
+
       });
 
-      // Drop zone after last project (end of client)
-      const ldzId=`dz-p-${cl.id}-last`;
-      const lrdzId=`rdz-p-${cl.id}-last`;
-      lh+=`<div class="dz${cC?' hidden':''}" id="${ldzId}"
-        ondragover="onDzOver(event,this,'${lrdzId}')"
-        ondragleave="onDzLeave(this,'${lrdzId}')"
-        ondrop="onDzDrop(event,'proj','${cl.id}',null,null)"></div>`;
-      rh+=`<div class="rrow-dz${cC?' hidden':''}" id="${lrdzId}"></div>`;
+
     });
   }
 
